@@ -22,7 +22,7 @@ $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location -LiteralPath $projectRoot
 
-function Require-EnvironmentVariable([string]$Name) {
+function Get-RequiredEnvironmentVariable([string]$Name) {
     $value = [Environment]::GetEnvironmentVariable($Name)
     if ([string]::IsNullOrWhiteSpace($value)) {
         throw "Required environment variable '$Name' is not set."
@@ -30,19 +30,19 @@ function Require-EnvironmentVariable([string]$Name) {
     return $value
 }
 
-function Require-File([string]$Name) {
-    $path = Require-EnvironmentVariable $Name
+function Get-RequiredFile([string]$Name) {
+    $path = Get-RequiredEnvironmentVariable $Name
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         throw "File configured by '$Name' was not found: $path"
     }
     return (Resolve-Path -LiteralPath $path).Path
 }
 
-$null = Require-EnvironmentVariable "MASTER_SERVER_SECRET_HEX"
-$null = Require-EnvironmentVariable "MISSION_BROADCAST_KEY_HEX"
-$env:TLS_CERT_FILE = Require-File "TLS_CERT_FILE"
-$env:TLS_KEY_FILE = Require-File "TLS_KEY_FILE"
-$env:TLS_CA_FILE = Require-File "TLS_CA_FILE"
+$null = Get-RequiredEnvironmentVariable "MASTER_SERVER_SECRET_HEX"
+$null = Get-RequiredEnvironmentVariable "MISSION_BROADCAST_KEY_HEX"
+$env:TLS_CERT_FILE = Get-RequiredFile "TLS_CERT_FILE"
+$env:TLS_KEY_FILE = Get-RequiredFile "TLS_KEY_FILE"
+$env:TLS_CA_FILE = Get-RequiredFile "TLS_CA_FILE"
 
 if (-not $env:DEVICE_REGISTRY_PATH) {
     $env:DEVICE_REGISTRY_PATH = Join-Path $projectRoot "device_registry.json"
