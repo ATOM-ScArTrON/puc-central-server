@@ -7,6 +7,7 @@ Required environment variables:
   TLS_CERT_FILE
   TLS_KEY_FILE
   TLS_CA_FILE
+  TLS_CA_KEY_FILE
   DATABASE_URL
   ADMIN_PASSWORD
 
@@ -48,6 +49,7 @@ $null = Get-RequiredEnvironmentVariable "ADMIN_PASSWORD"
 $env:TLS_CERT_FILE = Get-RequiredFile "TLS_CERT_FILE"
 $env:TLS_KEY_FILE = Get-RequiredFile "TLS_KEY_FILE"
 $env:TLS_CA_FILE = Get-RequiredFile "TLS_CA_FILE"
+$env:TLS_CA_KEY_FILE = Get-RequiredFile "TLS_CA_KEY_FILE"
 
 if (-not $env:ADMIN_USERNAME) { $env:ADMIN_USERNAME = "postgres" }
 if (-not $env:SERVER_BIND) { $env:SERVER_BIND = "127.0.0.1" }
@@ -60,4 +62,4 @@ Write-Host "Starting admin UI on $($env:ADMIN_BIND):$($env:ADMIN_PORT)"
 Write-Host "Database: configured PostgreSQL connection"
 Write-Host "Press Ctrl+C to stop the server."
 
-python -m server.central_server
+python -m server.main

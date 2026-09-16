@@ -9,7 +9,7 @@ import psycopg
 from psycopg.rows import dict_row
 
 
-class Database:
+class Database: 
     def __init__(self, dsn=None):
         self.dsn = dsn or os.environ.get("DATABASE_URL", "")
         if not self.dsn:
@@ -21,7 +21,7 @@ class Database:
             yield connection
 
     def initialize(self):
-        schema = Path(__file__).with_name("schema.sql").read_text(encoding="utf-8")
+        schema = (Path(__file__).parent.parent / "schema.sql").read_text(encoding="utf-8")
         with self.connection() as connection:
             # Both the device and admin Uvicorn listeners use the same FastAPI
             # app, so startup can run twice concurrently in this process. The
@@ -97,6 +97,13 @@ class Database:
             connection.execute(
                 "INSERT INTO devices (device_id, certificate_fingerprint, status, gateway) "
                 "VALUES (%s, %s, 'ACTIVE', %s)", (device_id, fingerprint, gateway)
+            )
+
+    def update_fingerprint(self, device_id, fingerprint):
+        with self.connection() as connection:
+            connection.execute(
+                "UPDATE devices SET certificate_fingerprint=%s WHERE device_id=%s",
+                (fingerprint, device_id)
             )
 
     def set_peers(self, device_id, peers):

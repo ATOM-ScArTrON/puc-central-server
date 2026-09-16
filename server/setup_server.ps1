@@ -153,12 +153,13 @@ $env:ADMIN_PASSWORD = 'bits@123'
 $env:TLS_CERT_FILE = '__TLS_CERT__'
 $env:TLS_KEY_FILE = '__TLS_KEY__'
 $env:TLS_CA_FILE = '__TLS_CA__'
+$env:TLS_CA_KEY_FILE = '__TLS_CA_KEY__'
 $env:SERVER_BIND = '0.0.0.0'
 $env:SERVER_PORT = '8443'
 $env:ADMIN_BIND = '127.0.0.1'
 $env:ADMIN_PORT = '8444'
 '@ | ForEach-Object {
-    $_.Replace('__MASTER_SECRET__', $masterSecret).Replace('__BROADCAST_KEY__', $broadcastKey).Replace('__TLS_CERT__', $serverCert).Replace('__TLS_KEY__', $serverKey).Replace('__TLS_CA__', $caCert)
+    $_.Replace('__MASTER_SECRET__', $masterSecret).Replace('__BROADCAST_KEY__', $broadcastKey).Replace('__TLS_CERT__', $serverCert).Replace('__TLS_KEY__', $serverKey).Replace('__TLS_CA__', $caCert).Replace('__TLS_CA_KEY__', $caKey)
 } | Set-Content -LiteralPath $envFile -Encoding utf8
 
 Remove-Item -LiteralPath $serverCsr, $serverExt, $clientExt -Force
