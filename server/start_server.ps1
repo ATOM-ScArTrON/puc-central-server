@@ -7,11 +7,14 @@ Required environment variables:
   TLS_CERT_FILE
   TLS_KEY_FILE
   TLS_CA_FILE
+  DATABASE_URL
+  ADMIN_PASSWORD
 
 Optional environment variables:
-  DEVICE_REGISTRY_PATH (default: .\device_registry.json)
   SERVER_BIND          (default: 0.0.0.0)
   SERVER_PORT          (default: 8443)
+  ADMIN_BIND           (default: 127.0.0.1)
+  ADMIN_PORT           (default: 8444)
 
 Set secrets and certificate paths outside the repository before running this
 script. This script intentionally does not generate or print secret values.
@@ -40,23 +43,21 @@ function Get-RequiredFile([string]$Name) {
 
 $null = Get-RequiredEnvironmentVariable "MASTER_SERVER_SECRET_HEX"
 $null = Get-RequiredEnvironmentVariable "MISSION_BROADCAST_KEY_HEX"
+$null = Get-RequiredEnvironmentVariable "DATABASE_URL"
+$null = Get-RequiredEnvironmentVariable "ADMIN_PASSWORD"
 $env:TLS_CERT_FILE = Get-RequiredFile "TLS_CERT_FILE"
 $env:TLS_KEY_FILE = Get-RequiredFile "TLS_KEY_FILE"
 $env:TLS_CA_FILE = Get-RequiredFile "TLS_CA_FILE"
 
-if (-not $env:DEVICE_REGISTRY_PATH) {
-    $env:DEVICE_REGISTRY_PATH = Join-Path $projectRoot "device_registry.json"
-}
-
-if (-not (Test-Path -LiteralPath $env:DEVICE_REGISTRY_PATH -PathType Leaf)) {
-    throw "Device registry was not found: $($env:DEVICE_REGISTRY_PATH)"
-}
-
-if (-not $env:SERVER_BIND) { $env:SERVER_BIND = "0.0.0.0" }
+if (-not $env:ADMIN_USERNAME) { $env:ADMIN_USERNAME = "postgres" }
+if (-not $env:SERVER_BIND) { $env:SERVER_BIND = "127.0.0.1" }
 if (-not $env:SERVER_PORT) { $env:SERVER_PORT = "8443" }
+if (-not $env:ADMIN_BIND) { $env:ADMIN_BIND = "127.0.0.1" }
+if (-not $env:ADMIN_PORT) { $env:ADMIN_PORT = "8444" }
 
-Write-Host "Starting central server on $($env:SERVER_BIND):$($env:SERVER_PORT)"
-Write-Host "Registry: $($env:DEVICE_REGISTRY_PATH)"
+Write-Host "Starting device API on $($env:SERVER_BIND):$($env:SERVER_PORT)"
+Write-Host "Starting admin UI on $($env:ADMIN_BIND):$($env:ADMIN_PORT)"
+Write-Host "Database: configured PostgreSQL connection"
 Write-Host "Press Ctrl+C to stop the server."
 
 python -m server.central_server

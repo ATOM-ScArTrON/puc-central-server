@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block content %}
+<h1>Devices</h1><table><tr><th>Device</th><th>Status</th><th>Certificate fingerprint</th><th>Peers</th><th>Action</th></tr>{% for d in devices %}<tr><td>{{ d.device_id }}</td><td><span class="badge {{ d.status|lower }}">{{ d.status }}</span></td><td>{{ d.certificate_fingerprint }}</td><td>{{ d.peers|join(', ') }}</td><td><a href="/admin/devices/{{ d.device_id }}">Manage</a></td></tr>{% endfor %}</table>
+<h2>Add device</h2><form method="post" action="/admin/devices"><label>Device ID<br><input name="device_id" required></label><br><label>SHA-256 certificate fingerprint<br><input name="certificate_fingerprint" minlength="64" maxlength="64" required></label><br><label><input type="checkbox" name="gateway"> Gateway</label><br><button type="submit">Add device</button></form>
+{% endblock %}

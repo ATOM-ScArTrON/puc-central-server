@@ -1,5 +1,33 @@
+# Local deployment state, credentials, certificates, and device bundles
 runtime/
+*.key
+*.crt
+*.csr
+*.pem
+*.srl
 device_registry.json
 server_sync.jsonl
+
+# Python caches and test/tooling output
 __pycache__/
+**/__pycache__/
 *.py[cod]
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Local environments and editor/OS files
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db

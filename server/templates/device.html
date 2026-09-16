@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% block content %}
+<h1>{{ device.device_id }}</h1><p>Status: <span class="badge {{ device.status|lower }}">{{ device.status }}</span></p><p>Certificate: {{ device.certificate_fingerprint }}</p><p>Last seen: {{ device.last_seen_at or 'Never' }}</p>
+<h2>Allowed peers</h2><form method="post" action="/admin/devices/{{ device.device_id }}/peers">{% for other in all_devices %}<label><input type="checkbox" name="peers" value="{{ other }}" {% if other in peers %}checked{% endif %}> {{ other }}</label><br>{% endfor %}<button type="submit">Save peers and rotate epoch</button></form>
+{% if device.status == 'ACTIVE' %}<form method="post" action="/admin/devices/{{ device.device_id }}/reprovision"><button type="submit">Re-provision and rotate keys</button></form><form method="post" action="/admin/devices/{{ device.device_id }}/revoke"><button class="danger" type="submit">Revoke device</button></form>{% endif %}
+{% endblock %}

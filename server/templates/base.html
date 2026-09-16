@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PUC Central Server</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        background: #101827;
+        color: #e5e7eb;
+        margin: 0;
+      }
+      nav {
+        background: #182235;
+        padding: 1rem 2rem;
+      }
+      nav a {
+        color: #c7d2fe;
+        margin-right: 1.2rem;
+        text-decoration: none;
+      }
+      main {
+        max-width: 1100px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      .cards {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .card {
+        background: #1f2a3d;
+        border-radius: 8px;
+        padding: 1rem 1.3rem;
+        min-width: 150px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #1f2a3d;
+      }
+      th,
+      td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #374151;
+        text-align: left;
+      }
+      input,
+      select,
+      button {
+        padding: 0.55rem;
+        margin: 0.25rem 0;
+        border-radius: 4px;
+        border: 1px solid #64748b;
+        background: #111827;
+        color: #f8fafc;
+      }
+      button {
+        background: #2563eb;
+        border: 0;
+        cursor: pointer;
+      }
+      .danger {
+        background: #b91c1c;
+      }
+      .muted {
+        color: #94a3b8;
+      }
+      .badge {
+        padding: 0.2rem 0.5rem;
+        border-radius: 999px;
+        background: #334155;
+      }
+      .active {
+        background: #166534;
+      }
+      .revoked {
+        background: #991b1b;
+      }
+      .suspected {
+        background: #92400e;
+      }
+      form {
+        margin: 1rem 0;
+        padding: 1rem;
+        background: #1f2a3d;
+        border-radius: 8px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="/admin">Dashboard</a>
+      <a href="/admin/devices">Devices</a>
+      <a href="/admin/audit">Audit log</a>
+    </nav>
+    <main>{% block content %}{% endblock %}</main>
+  </body>
+</html>
