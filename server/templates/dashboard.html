@@ -1,5 +1,26 @@
 {% extends "base.html" %}{% block content %}
-<h1>Central server</h1><p class="muted">Active key epoch: {{ epoch }}</p>
-<div class="cards"><div class="card">Active<br><strong>{{ counts.active }}</strong></div><div class="card">Suspected<br><strong>{{ counts.suspected }}</strong></div><div class="card">Revoked<br><strong>{{ counts.revoked }}</strong></div></div>
-<h2>Devices</h2><table><tr><th>Device</th><th>Status</th><th>Peers</th><th>Last seen</th></tr>{% for d in devices %}<tr><td><a href="/admin/devices/{{ d.device_id }}">{{ d.device_id }}</a></td><td><span class="badge {{ d.status|lower }}">{{ d.status }}</span></td><td>{{ d.peers|join(', ') }}</td><td>{{ d.last_seen_at or 'Never' }}</td></tr>{% endfor %}</table>
+<h1>Central server</h1>
+<p class="muted">Active key epoch: {{ epoch }}</p>
+<div class="cards">
+  <div class="card">Active<br /><strong>{{ counts.active }}</strong></div>
+  <div class="card">Suspected<br /><strong>{{ counts.suspected }}</strong></div>
+  <div class="card">Revoked<br /><strong>{{ counts.revoked }}</strong></div>
+</div>
+<h2>Devices</h2>
+<table>
+  <tr>
+    <th>Device</th>
+    <th>Status</th>
+    <th>Peers</th>
+    <th>Last seen</th>
+  </tr>
+  {% for d in devices %}
+  <tr>
+    <td><a href="/admin/devices/{{ d.device_id }}">{{ d.device_id }}</a></td>
+    <td><span class="badge {{ d.status|lower }}">{{ d.status }}</span></td>
+    <td>{{ d.peers|join(', ') }}</td>
+    <td>{{ d.last_seen_at or 'Never' }}</td>
+  </tr>
+  {% endfor %}
+</table>
 {% endblock %}
