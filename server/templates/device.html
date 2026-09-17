@@ -6,6 +6,7 @@
 </p>
 <p>Certificate: {{ device.certificate_fingerprint }}</p>
 <p>Last seen: {{ device.last_seen_at or 'Never' }}</p>
+<p>Gateway: {{ 'Yes' if device.gateway else 'No' }}</p>
 <h2>Allowed peers</h2>
 <form method="post" action="/admin/devices/{{ device.device_id }}/peers">
   {% for other in all_devices %}<label
@@ -26,6 +27,16 @@
   ><br />{% endfor %}<button type="submit">Save peers and rotate epoch</button>
 </form>
 {% if device.status == 'ACTIVE' %}
+<form method="post" action="/admin/devices/{{ device.device_id }}/gateway">
+  <input
+    type="hidden"
+    name="gateway"
+    value="{{ 'false' if device.gateway else 'true' }}"
+  />
+  <button type="submit">
+    {{ 'Revoke gateway role' if device.gateway else 'Grant gateway role' }}
+  </button>
+</form>
 <form method="post" action="/admin/devices/{{ device.device_id }}/reprovision">
   <button type="submit">Re-provision and rotate keys</button>
 </form>

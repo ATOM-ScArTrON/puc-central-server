@@ -1,5 +1,9 @@
 {% extends "base.html" %}{% block content %}
 <h1>Devices</h1>
+<p class="muted">
+  Devices appear here after enrolling via the zero-touch /api/enroll flow. There
+  is no manual add-device path.
+</p>
 <table>
   <tr>
     <th>Device</th>
@@ -18,15 +22,4 @@
   </tr>
   {% endfor %}
 </table>
-<h2>Add device</h2>
-<form method="post" action="/admin/devices">
-  <label>Device ID<br /><input name="device_id" required /></label><br /><label
-    >SHA-256 certificate fingerprint<br /><input
-      name="certificate_fingerprint"
-      minlength="64"
-      maxlength="64"
-      required /></label
-  ><br /><label><input type="checkbox" name="gateway" /> Gateway</label
-  ><br /><button type="submit">Add device</button>
-</form>
 {% endblock %}
