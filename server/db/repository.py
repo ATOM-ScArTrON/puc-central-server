@@ -104,6 +104,14 @@ class Database:
                 (fingerprint, device_id)
             )
 
+    def set_gateway(self, device_id, gateway):
+        with self.connection() as connection:
+            result = connection.execute(
+                "UPDATE devices SET gateway=%s WHERE device_id=%s",
+                (gateway, device_id)
+            )
+        return result.rowcount > 0
+    
     def set_peers(self, device_id, peers):
         peers = sorted(set(peers) - {device_id})
         with self.connection() as connection:
@@ -135,6 +143,33 @@ class Database:
             connection.execute(
                 "UPDATE peer_links SET status='DISABLED', disabled_at=CURRENT_TIMESTAMP "
                 "WHERE %s IN (device_a, device_b) AND status='ACTIVE'", (device_id,)
+            )
+        return result.rowcount > 0
+
+    def delete_device(self, device_id):
+        """Irreversibly remove a device and its telemetry.
+ 
+        Requires the device to already be REVOKED -- this is a destructive,
+        unrecoverable operation and revoke_device() is the reversible first
+        step. peer_links rows cascade automatically (schema has ON DELETE
+        CASCADE on both device_a/device_b). telemetry_records has no cascade
+        and is deleted explicitly. audit_events is intentionally left alone:
+        it's the historical record that this device ever existed and was
+        deleted, not data the device owns.
+        """
+        with self.connection() as connection:
+            device = connection.execute(
+                "SELECT status FROM devices WHERE device_id=%s", (device_id,)
+            ).fetchone()
+            if not device:
+                return False
+            if device["status"] != "REVOKED":
+                raise ValueError("device must be revoked before it can be deleted")
+            connection.execute(
+                "DELETE FROM telemetry_records WHERE device_id=%s", (device_id,)
+            )
+            result = connection.execute(
+                "DELETE FROM devices WHERE device_id=%s", (device_id,)
             )
         return result.rowcount > 0
 

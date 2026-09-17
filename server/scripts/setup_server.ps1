@@ -1,7 +1,8 @@
 <#
-Prepares a local development installation of the central server.
-Initializes the CA and Server certificates only. Device registration
-is deferred to the frontend UI and backend API.
+Prepares a local development installation of the central server: creates the
+CA and server TLS identity only. Devices get their own client identity via
+zero-touch enrollment (POST /api/enroll from the Pi) — this script no longer
+pre-generates per-device certificates or a device registry.
 #>
 
 [CmdletBinding()]
@@ -14,12 +15,11 @@ $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $runtimeRoot = Join-Path $projectRoot "runtime"
 $tlsRoot = Join-Path $runtimeRoot "tls"
-$devicesRoot = Join-Path $runtimeRoot "devices"
 $envFile = Join-Path $runtimeRoot "server.env.ps1"
 
 function Require-Command([string]$Name) {
     $command = Get-Command $Name -ErrorAction SilentlyContinue
-    if (-not $command) { throw "Required command '$Name' was not found in PATH. Install OpenSSL." }
+    if (-not $command) { throw "Required command '$Name' was not found in PATH. Install OpenSSL and try again." }
     return $command.Source
 }
 
@@ -38,15 +38,12 @@ function New-HexSecret([int]$Length) {
 if (Test-Path -LiteralPath $runtimeRoot) {
     $existing = Get-ChildItem -LiteralPath $runtimeRoot -Force -ErrorAction SilentlyContinue
     if ($existing -and -not $Force) {
-        throw "Runtime directory already contains files. Use -Force to replace."
+        throw "Runtime directory already contains files. Use -Force only to replace the development setup."
     }
 }
 
 $openssl = Require-Command "openssl"
-if ($Force -and (Test-Path -LiteralPath $devicesRoot)) {
-    Remove-Item -LiteralPath $devicesRoot -Recurse -Force
-}
-New-Item -ItemType Directory -Force -Path $tlsRoot, $devicesRoot | Out-Null
+New-Item -ItemType Directory -Force -Path $tlsRoot | Out-Null
 
 $caKey = Join-Path $tlsRoot "ca.key"
 $caCert = Join-Path $tlsRoot "ca.crt"
@@ -76,10 +73,6 @@ Invoke-OpenSsl $openssl @("genrsa", "-out", $serverKey, "2048")
 Invoke-OpenSsl $openssl @("req", "-new", "-key", $serverKey, "-out", $serverCsr, "-subj", "/CN=$ServerHost")
 Invoke-OpenSsl $openssl @("x509", "-req", "-in", $serverCsr, "-CA", $caCert, "-CAkey", $caKey, "-CAcreateserial", "-out", $serverCert, "-days", "825", "-sha256", "-extfile", $serverExt)
 
-# Initialize an empty device registry for the backend to populate later
-$registry = [ordered]@{ epoch_id = 0; epoch_start_time = 0; devices = [ordered]@{} }
-$registry | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $runtimeRoot "device_registry.json") -Encoding utf8
-
 $masterSecret = New-HexSecret 32
 $broadcastKey = New-HexSecret 16
 @'
@@ -101,7 +94,7 @@ $env:ADMIN_PORT = '8444'
 } | Set-Content -LiteralPath $envFile -Encoding utf8
 
 Remove-Item -LiteralPath $serverCsr, $serverExt -Force
-Get-ChildItem -LiteralPath $tlsRoot -Filter "*.srl" -File | Remove-Item -Force
 
-Write-Host "Server identity and environment initialized successfully."
-Write-Host "Device registry created empty. Awaiting UI registration."
+Write-Host "Development server setup complete (CA + server identity only)."
+Write-Host "Load server configuration with: . .\runtime\server.env.ps1"
+Write-Host "Devices enroll themselves via POST /api/enroll when they first run the provisioning client."

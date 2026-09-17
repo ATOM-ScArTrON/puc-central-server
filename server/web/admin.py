@@ -54,6 +54,9 @@ def dashboard(request: Request, _: str = Depends(admin_user), db: Database = Dep
 
 @router.get("/admin/devices", response_class=HTMLResponse)
 def devices_page(request: Request, _: str = Depends(admin_user), db: Database = Depends(get_db)):
+    # Devices only appear here after they've enrolled themselves via
+    # POST /api/enroll (zero-touch). There is no manual "add device" path --
+    # an admin cannot pre-register a fingerprint that a Pi hasn't presented.
     return templates.TemplateResponse(request=request, name="devices.html",
                                       context={"devices": db.list_devices()})
 
@@ -77,19 +80,6 @@ def audit_page(request: Request, _: str = Depends(admin_user), db: Database = De
                                       context={"events": db.recent_audit()})
 
 
-@router.post("/admin/devices")
-def add_device(
-    request: Request, device_id: str = Form(...), certificate_fingerprint: str = Form(...),
-    gateway: bool = Form(False), admin: str = Depends(admin_user), db: Database = Depends(get_db)
-):
-    fingerprint = certificate_fingerprint.strip().lower().replace(":", "")
-    if len(fingerprint) != 64 or any(c not in "0123456789abcdef" for c in fingerprint):
-        raise HTTPException(status_code=400, detail="certificate fingerprint must be SHA-256 hex")
-    db.add_device(device_id.strip(), fingerprint, gateway)
-    db.audit(admin, "ADD_DEVICE", "device", device_id.strip(), details={"fingerprint": fingerprint})
-    return RedirectResponse("/admin/devices", status_code=303)
-
-
 @router.post("/admin/devices/{device_id}/peers")
 def update_peers(
     device_id: str, request: Request, peers: list[str] = Form(default=[]),
@@ -101,12 +91,40 @@ def update_peers(
     return RedirectResponse(f"/admin/devices/{device_id}", status_code=303)
 
 
+@router.post("/admin/devices/{device_id}/gateway")
+def set_gateway(
+    device_id: str, gateway: bool = Form(False),
+    admin: str = Depends(admin_user), db: Database = Depends(get_db)
+):
+    """Gateway status is granted here, post-enrollment, by an admin --
+    never self-declared by the device at /api/enroll time."""
+    if not db.set_gateway(device_id, gateway):
+        raise HTTPException(status_code=404, detail="device not found")
+    db.audit(admin, "SET_GATEWAY", "device", device_id, details={"gateway": gateway})
+    return RedirectResponse(f"/admin/devices/{device_id}", status_code=303)
+
+
 @router.post("/admin/devices/{device_id}/revoke")
 def revoke_device(device_id: str, admin: str = Depends(admin_user), db: Database = Depends(get_db)):
     if not db.revoke_device(device_id):
         raise HTTPException(status_code=404, detail="device not found or already revoked")
     epoch = db.rotate_epoch()
     db.audit(admin, "REVOKE_DEVICE", "device", device_id, details={"key_epoch": epoch})
+    return RedirectResponse("/admin/devices", status_code=303)
+
+
+@router.post("/admin/devices/{device_id}/delete")
+def delete_device(device_id: str, admin: str = Depends(admin_user), db: Database = Depends(get_db)):
+    """Irreversible. Only allowed once a device is REVOKED -- revoke first,
+    confirm, then delete. Records the deletion in the audit log before the
+    device row disappears, so the audit trail still shows who did it."""
+    try:
+        deleted = db.delete_device(device_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if not deleted:
+        raise HTTPException(status_code=404, detail="device not found")
+    db.audit(admin, "DELETE_DEVICE", "device", device_id)
     return RedirectResponse("/admin/devices", status_code=303)
 
 

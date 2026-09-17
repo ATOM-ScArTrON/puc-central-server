@@ -158,13 +158,14 @@ def enroll(body: EnrollRequest, db: Database = Depends(get_db)):
     cert_der = cert.public_bytes(serialization.Encoding.DER)
     fingerprint = hashlib.sha256(cert_der).hexdigest()
 
-    # Register or update the device in the database
+    # Gateway status is never self-declared by the enrolling device --
+    # it's granted afterward by an admin via /admin/devices/{id}/gateway.
     existing = db.device_by_id(body.device_id)
     if existing:
-        # Update fingerprint if re-enrolling
+        # Update fingerprint if re-enrolling; gateway flag is left untouched.
         db.update_fingerprint(body.device_id, fingerprint)
     else:
-        db.add_device(body.device_id, fingerprint, gateway=body.gateway)
+        db.add_device(body.device_id, fingerprint, gateway=False)
 
     db.audit("enrollment", "DEVICE_ENROLL", "device", body.device_id,
              details={"fingerprint": fingerprint})

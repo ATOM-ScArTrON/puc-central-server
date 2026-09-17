@@ -43,4 +43,12 @@
 <form method="post" action="/admin/devices/{{ device.device_id }}/revoke">
   <button class="danger" type="submit">Revoke device</button>
 </form>
+{% elif device.status == 'REVOKED' %}
+<form
+  method="post"
+  action="/admin/devices/{{ device.device_id }}/delete"
+  onsubmit="return confirm('Permanently delete {{ device.device_id }} and its telemetry? This cannot be undone.');"
+>
+  <button class="danger" type="submit">Delete permanently</button>
+</form>
 {% endif %} {% endblock %}
