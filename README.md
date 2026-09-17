@@ -5,7 +5,7 @@
 The central service is a FastAPI application with a server-rendered Jinja2
 admin UI and PostgreSQL persistence. Install PostgreSQL and create a database
 and user matching `DATABASE_URL`, then install the Python dependencies from
-`requirements.txt`.
+`requirements-server.txt`.
 
 To create a development TLS configuration, install OpenSSL and run this on
 the server machine. Use the server's LAN address when the Pis are on another
