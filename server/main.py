@@ -1,6 +1,7 @@
 """Main entry point: wires API and web routers and launches Uvicorn servers."""
 
 import threading
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
@@ -11,17 +12,17 @@ from .config import (
     TLS_CA_FILE, TLS_CERT_FILE, TLS_KEY_FILE,
 )
 
-app = FastAPI(title="PUC Central Server")
-app.include_router(device_router)
-app.include_router(admin_router)
 
-
-@app.on_event("startup")
-def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     if DATABASE_URL:
         from .db import Database
         Database().initialize()
-
+    yield
+    
+app = FastAPI(title="PUC Central Server", lifespan=lifespan)
+app.include_router(device_router)
+app.include_router(admin_router)
 
 def main():
     import uvicorn
