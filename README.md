@@ -12,9 +12,9 @@ OpenSSL and run this on the server machine. Use the server's LAN address when
 the Pis are on another machine:
 
 ```powershell
-.\server\setup_server.ps1 -ServerHost 172.16.46.69
+.\server\scripts\setup_server.ps1 -ServerHost 172.16.46.69
 . .\runtime\server.env.ps1
-.\server\start_server.ps1
+.\server\scripts\start_server.ps1
 ```
 
 The setup script creates development-only secrets, a self-signed CA, a server
@@ -30,7 +30,7 @@ Do not rerun setup with `-Force` just to add a device. Issue one new client
 identity while preserving the existing CA and device credentials:
 
 ```powershell
-.\server\new_device.ps1 -DeviceId Pi-C -ServerHost 172.16.46.69
+.\server\scripts\new_device.ps1 -DeviceId Pi-C -ServerHost 172.16.46.69
 ```
 
 The generated directory under `runtime\devices\Pi-C` contains `client.crt`,
@@ -50,7 +50,7 @@ option can then upload queued records to the central server.
 Use `-Force` only when replacing the entire local development setup:
 
 ```powershell
-.\server\setup_server.ps1 -Force -ServerHost 172.16.46.69
+.\server\scripts\setup_server.ps1 -Force -ServerHost 172.16.46.69
 ```
 
 The generated `runtime/` directory is ignored by Git. Do not use the generated

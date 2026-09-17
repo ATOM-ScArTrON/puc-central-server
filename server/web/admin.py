@@ -2,7 +2,6 @@
 
 import hmac
 import json
-import os
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
@@ -11,6 +10,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.templating import Jinja2Templates
 
 from ..db import Database
+from ..config import ADMIN_PASSWORD, ADMIN_USERNAME
 
 router = APIRouter()
 basic = HTTPBasic(auto_error=False)
@@ -24,8 +24,8 @@ def get_db():
 
 
 def admin_user(credentials: HTTPBasicCredentials = Depends(basic)):
-    expected_user = os.environ.get("ADMIN_USERNAME", "admin")
-    expected_password = os.environ.get("ADMIN_PASSWORD", "")
+    expected_user = ADMIN_USERNAME
+    expected_password = ADMIN_PASSWORD
     if not credentials or not expected_password or not (
         hmac.compare_digest(credentials.username, expected_user)
         and hmac.compare_digest(credentials.password, expected_password)

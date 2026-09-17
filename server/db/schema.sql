@@ -1,3 +1,4 @@
+
 CREATE TABLE IF NOT EXISTS key_epochs (
     epoch_number BIGINT PRIMARY KEY,
     status TEXT NOT NULL CHECK (status IN ('ACTIVE', 'RETIRED')),
@@ -49,10 +50,8 @@ CREATE TABLE IF NOT EXISTS audit_events (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS telemetry_device_received_idx
-    ON telemetry_records (device_id, received_at DESC);
-CREATE INDEX IF NOT EXISTS audit_created_idx
-    ON audit_events (created_at DESC);
+CREATE INDEX IF NOT EXISTS telemetry_device_received_idx ON telemetry_records (device_id, received_at DESC);
+CREATE INDEX IF NOT EXISTS audit_created_idx ON audit_events (created_at DESC);
 
 INSERT INTO key_epochs (epoch_number, status, activated_at)
 VALUES (0, 'ACTIVE', CURRENT_TIMESTAMP)

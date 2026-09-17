@@ -2,18 +2,16 @@
 
 from contextlib import contextmanager
 import json
-import os
 from pathlib import Path
 
 import psycopg
 from psycopg.rows import dict_row
+from ..config import DATABASE_URL, required
 
 
 class Database: 
     def __init__(self, dsn=None):
-        self.dsn = dsn or os.environ.get("DATABASE_URL", "")
-        if not self.dsn:
-            raise RuntimeError("DATABASE_URL is required")
+        self.dsn = dsn or required("DATABASE_URL", DATABASE_URL)
 
     @contextmanager
     def connection(self):
@@ -21,7 +19,7 @@ class Database:
             yield connection
 
     def initialize(self):
-        schema = (Path(__file__).parent.parent / "schema.sql").read_text(encoding="utf-8")
+        schema = (Path(__file__).parent / "schema.sql").read_text(encoding="utf-8")
         with self.connection() as connection:
             # Both the device and admin Uvicorn listeners use the same FastAPI
             # app, so startup can run twice concurrently in this process. The

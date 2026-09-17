@@ -2,7 +2,6 @@
 
 import hashlib
 import json
-import os
 import ipaddress
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -12,10 +11,14 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, Field
-
 from ..db import Database
-from ..central_server import derive_pairwise_key
+from ..config import (
+    ALLOW_INSECURE_IDENTITY_HEADER, MASTER_SERVER_SECRET_HEX,
+    MISSION_BROADCAST_KEY_HEX, TLS_CA_CERT_FILE, TLS_CA_KEY_FILE,
+    required,
+)
+from ..crypto.keys import derive_pairwise_key
+from .schemas import EnrollRequest, RegisterRequest, SyncRequest
 
 router = APIRouter()
 
@@ -37,7 +40,7 @@ def client_fingerprint(request: Request):
         certificate = ssl_object.getpeercert(binary_form=True)
         if certificate:
             return hashlib.sha256(certificate).hexdigest()
-    if os.environ.get("ALLOW_INSECURE_IDENTITY_HEADER") == "1":
+    if ALLOW_INSECURE_IDENTITY_HEADER:
         return request.headers.get("x-client-cert-fingerprint", "").lower()
     raise HTTPException(status_code=401, detail="client certificate required")
 
@@ -54,13 +57,13 @@ def authorized_device(request: Request, db: Database = Depends(get_db)):
 
 def provision_for(device, db):
     epoch = db.active_epoch()
-    master = bytes.fromhex(os.environ["MASTER_SERVER_SECRET_HEX"])
+    master = bytes.fromhex(required("MASTER_SERVER_SECRET_HEX", MASTER_SERVER_SECRET_HEX))
     peers = db.peer_ids(device["device_id"])
     keyset = {
         peer: derive_pairwise_key(master, device["device_id"], peer, epoch).hex()
         for peer in peers
     }
-    broadcast = os.environ.get("MISSION_BROADCAST_KEY_HEX", "")
+    broadcast = MISSION_BROADCAST_KEY_HEX
     return {
         "device_id": device["device_id"],
         "mission_keyset": keyset,
@@ -68,23 +71,11 @@ def provision_for(device, db):
         "key_epoch": epoch,
         "mission_epoch_id": epoch,
         "epoch_start_time": int(datetime.now(timezone.utc).timestamp()),
-        "gateway": bool(device["gateway"]),
+        # This is a capability flag.  The gateway's mTLS client certificate
+        # is returned separately by /api/enroll as certificate_pem; there is
+        # no second gateway-only identity in this deployment.
+        "gateway_enabled": bool(device["gateway"]),
     }
-
-
-class RegisterRequest(BaseModel):
-    device_id: str = Field(min_length=1, max_length=128)
-
-
-class SyncRequest(BaseModel):
-    device_id: str = Field(min_length=1, max_length=128)
-    records: list[dict] = Field(default_factory=list)
-
-
-class EnrollRequest(BaseModel):
-    device_id: str = Field(min_length=1, max_length=128)
-    csr_pem: str = Field(min_length=1)
-    gateway: bool = False
 
 
 @router.post("/device/register")
@@ -125,8 +116,8 @@ def enroll(body: EnrollRequest, db: Database = Depends(get_db)):
       3. Registers the certificate fingerprint in PostgreSQL.
       4. Returns the signed certificate PEM + provisioning payload.
     """
-    ca_cert_path = os.environ.get("TLS_CA_CERT_FILE", os.environ.get("TLS_CERT_FILE", ""))
-    ca_key_path = os.environ.get("TLS_CA_KEY_FILE", os.environ.get("TLS_KEY_FILE", ""))
+    ca_cert_path = TLS_CA_CERT_FILE
+    ca_key_path = TLS_CA_KEY_FILE
 
     if not ca_cert_path or not ca_key_path:
         raise HTTPException(status_code=503, detail="server CA not configured for enrollment")
